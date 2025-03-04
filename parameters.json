@@ -1,0 +1,10 @@
+{
+  "Iterations": 1000000,
+  "Employees": 10,
+  "Salary": 100000,
+  "averageClientsMonth": 25,
+  "MeanCostOrder": 60000,
+  "OrderStdDev": 15000,
+  "Alpha": 3,
+  "Beta": 7
+}
