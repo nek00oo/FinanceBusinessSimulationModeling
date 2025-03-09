@@ -6,32 +6,21 @@ public static class ParametersReader
 {
     public static Parameters? ReadParametersFromJson(string filePath)
     {
-        try
-        {
-            var json = File.ReadAllText(filePath);
-            var parameters = JsonConvert.DeserializeObject<Parameters>(json);
-            if (parameters == null)
-            {
-                Console.WriteLine("Ошибка десериализации параметров из JSON.");
-                return null;
-            }
+        var json = File.ReadAllText(filePath);
+        var parameters = JsonConvert.DeserializeObject<Parameters>(json);
+        if (parameters == null)
+            throw new JsonReaderException("Ошибка десериализации параметров из JSON.");
 
-            return parameters;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Ошибка чтения параметров из JSON-файла: {ex.Message}");
-            return null;
-        }
+        return parameters;
     }
 }
 
 public record Parameters(
     int Iterations,
-    int Employees,
-    double Salary,
-    int AverageClientsMonth,
-    double MeanCostOrder,
-    double OrderStdDev,
-    int Alpha,
-    int Beta);
+    int[] Employees,
+    double[] Salary,
+    int[] AverageClientsMonth,
+    double[] MeanCostOrder,
+    double[] OrderStdDev,
+    int[] Alpha,
+    int[] Beta);
