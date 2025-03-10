@@ -36,7 +36,7 @@ public static class AggregatedHistogramBuilder
             var paramName = paramInfo.Key;
             var paramValues = (IList)typeof(Parameters).GetProperty(paramName)?.GetValue(parameters)!;
         
-            // Пропускаем параметры с менее чем 2 значениями
+            // Пропускаем параметры с менее чем 2 значениями, чтобы строить агрегированные графики
             if (paramValues == null || paramValues.Count < 2) 
             {
                 Console.WriteLine($"Пропуск параметра {paramName}: недостаточно значений");
@@ -76,8 +76,7 @@ public static class AggregatedHistogramBuilder
                 Background = OxyColors.Black,
                 IsLegendVisible = true,
             };
-
-            // Настройка осей
+            
             plotModel.Axes.Add(new LinearAxis
             {
                 Position = AxisPosition.Bottom,
@@ -114,6 +113,7 @@ public static class AggregatedHistogramBuilder
                 variationValues.Add(variationValue);
 
                 var histogramSeries = CreateHistogramSeries(profits, combination, paramName);
+                
                 if (histogramSeries == null) continue;
 
                 histogramSeries.Title = $"{paramName} = {variationValue}";

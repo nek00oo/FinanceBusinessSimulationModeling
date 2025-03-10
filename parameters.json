@@ -4,7 +4,7 @@
   "Salary": [100000],
   "AverageClientsMonth": [25],
   "MeanCostOrder": [60000],
-  "OrderStdDev": [10000],
+  "OrderStdDev": [10000, 30000],
   "Alpha": [2],
   "Beta": [8]
 }
