@@ -61,7 +61,6 @@ public class CompanyModel
     /// <returns>Прибыль за месяц</returns>
     public double CalculateProfitMonth(int averageClientMonth, out int amountClientMonth, out int successOrders)
     {
-        //Random rnd = new Random();
         double profitMonth = 0;
         successOrders = 0;
         amountClientMonth = Client.GetAmountClient(averageClientMonth);

@@ -16,7 +16,6 @@ class Program
 
         var iterations = parameters.Iterations;
 
-        // Директорию для результатов
         var resultsDirectory = Path.Combine("C:\\Users\\valer\\RiderProjects\\SimulationModeling", "Results");
         Directory.CreateDirectory(resultsDirectory);
 
@@ -53,8 +52,7 @@ class Program
 
             Console.WriteLine($"Данные сохранены в '{csvFilePath}'");
         }
-
-        // Строим агрегированные гистограммы
+        
         AggregatedHistogramBuilder.BuildAndSaveAggregatedHistograms(parameters, resultsDirectory, generator);
 
         stopwatch.Stop();

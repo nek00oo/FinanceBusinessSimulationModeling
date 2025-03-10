@@ -12,7 +12,7 @@ namespace SimulationModeling
         public IEnumerable<ParameterCombination> GenerateCombinations()
         {
             return 
-                from t in _parameters.Employees
+                from employees in _parameters.Employees
                 from salary in _parameters.Salary
                 from averageClientMonth in _parameters.AverageClientsMonth
                 from meanCostOrder in _parameters.MeanCostOrder
@@ -21,7 +21,7 @@ namespace SimulationModeling
                 from beta in _parameters.Beta
                 select new ParameterCombination
             (
-                t,
+                employees,
                 salary,
                 averageClientMonth,
                 meanCostOrder,

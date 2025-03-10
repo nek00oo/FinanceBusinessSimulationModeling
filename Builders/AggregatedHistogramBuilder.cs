@@ -3,34 +3,111 @@ using OxyPlot.Axes;
 using OxyPlot.Series;
 using OxyPlot.SkiaSharp;
 using SimulationModeling;
+using Exception = System.Exception;
 
 public static class AggregatedHistogramBuilder
 {
-    private static readonly Random _random = new Random(42);
-
+    private static readonly Random _random = new(42);
+    
     public static void BuildAndSaveAggregatedHistograms(Parameters parameters, string resultsDirectory, ParameterCombinationsGenerator generator)
     {
         var iterations = parameters.Iterations;
-
-        // Создаем поддиректорию AggregatedHistograms внутри Results
+        
         var aggregatedResultsDir = Path.Combine(resultsDirectory, "AggregatedHistograms");
         Directory.CreateDirectory(aggregatedResultsDir);
-
-        // Строим гистограммы для каждого параметра
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.Beta, "Beta", "Beta Variations");
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.Alpha, "Alpha", "Alpha Variations");
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.OrderStdDev, "OrderStdDev", "Order StdDev Variations");
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.MeanCostOrder, "MeanCostOrder", "Mean Cost Order Variations");
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.AverageClientsMonth, "AverageClientsMonth", "Average Clients Month Variations");
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.Employees, "Employees", "Employees Variations");
-        BuildGroupedHistogram(parameters, iterations, resultsDirectory, generator, param => param.Salary, "Salary", "Salary Variations");
+        
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.Beta, "Beta", "Beta Variations");
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.Alpha, "Alpha", "Alpha Variations");
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.OrderStdDev, "OrderStdDev", "Order StdDev Variations");
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.MeanCostOrder, "MeanCostOrder", "Mean Cost Order Variations");
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.AverageClientsMonth, "AverageClientsMonth", "Average Clients Month Variations");
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.Employees, "Employees", "Employees Variations");
+        BuildGroupedHistogram(parameters, iterations, resultsDirectory, aggregatedResultsDir, generator, param => param.Salary, "Salary", "Salary Variations");
     }
 
+    // private static void BuildGroupedHistogram(Parameters parameters, int iterations, string resultsDirectory,
+    //     string aggregatedResultsDir, ParameterCombinationsGenerator generator,
+    //     Func<ParameterCombination, object> varyingParamSelector, string paramName, string groupTitle)
+    // {
+    //     foreach (var fixedCombination in GetFixedCombinations(parameters, varyingParamSelector))
+    //     {
+    //         var plotModel = new PlotModel
+    //         {
+    //             Title =
+    //                 $"{groupTitle} (E={fixedCombination.Employees}, S={fixedCombination.Salary}, C={fixedCombination.AverageClientsMonth}, M={fixedCombination.MeanCostOrder}, D={fixedCombination.OrderStdDev}, A={fixedCombination.Alpha})",
+    //             TitleColor = OxyColors.White,
+    //             Background = OxyColors.Black
+    //         };
+    //
+    //         plotModel.Axes.Add(new LinearAxis
+    //         {
+    //             Position = AxisPosition.Bottom,
+    //             Title = "Прибыль",
+    //             TextColor = OxyColors.White,
+    //             TitleColor = OxyColors.White,
+    //             TicklineColor = OxyColors.White,
+    //             AxislineColor = OxyColors.White,
+    //         });
+    //
+    //         plotModel.Axes.Add(new LinearAxis
+    //         {
+    //             Position = AxisPosition.Left,
+    //             Title = "Количество результатов",
+    //             TextColor = OxyColors.White,
+    //             TitleColor = OxyColors.White,
+    //             TicklineColor = OxyColors.White,
+    //             AxislineColor = OxyColors.White,
+    //         });
+    //
+    //         bool hasData = false;
+    //
+    //         foreach (var combination in generator.GenerateCombinations())
+    //         {
+    //             if (!IsCombinationInGroup(fixedCombination, combination, varyingParamSelector))
+    //                 continue;
+    //
+    //             var profits = LoadProfitsFromCsv(combination, resultsDirectory);
+    //             if (profits.Length == 0 || profits.Distinct().Count() < 2)
+    //                 continue;
+    //
+    //             var histogramSeries = CreateHistogramSeries(profits, combination, paramName);
+    //
+    //             plotModel.Series.Add(histogramSeries);
+    //             hasData = true;
+    //         }
+    //
+    //         if (!hasData)
+    //         {
+    //             Console.WriteLine($"Нет данных для группы: {groupTitle}");
+    //             continue;
+    //         }
+    //
+    //         var plotFileName =
+    //             $"aggregated_{paramName}_E{fixedCombination.Employees}_S{fixedCombination.Salary}_C{fixedCombination.AverageClientsMonth}_M{fixedCombination.MeanCostOrder}_D{fixedCombination.OrderStdDev}_A{fixedCombination.Alpha}.png";
+    //         var plotFilePath = Path.Combine(aggregatedResultsDir, plotFileName);
+    //
+    //         using (var stream = File.Create(plotFilePath))
+    //         {
+    //             var exporter = new PngExporter { Width = 1200, Height = 800 };
+    //             exporter.Export(plotModel, stream);
+    //         }
+    //
+    //         Console.WriteLine($"Агрегированный график для {paramName} сохранён в '{plotFilePath}'");
+    //     }
+    // }
+    
     private static void BuildGroupedHistogram(Parameters parameters, int iterations, string resultsDirectory,
-        ParameterCombinationsGenerator generator, Func<ParameterCombination, object> varyingParamSelector,
-        string paramName, string groupTitle)
+        string aggregatedResultsDir, ParameterCombinationsGenerator generator,
+        Func<ParameterCombination, object> varyingParamSelector, string paramName, string groupTitle)
     {
-        foreach (var fixedCombination in GetFixedCombinations(parameters, varyingParamSelector))
+        // Получаем реальные комбинации и группируем их по ключу (без varyingParam)
+        var existingCombinations = generator.GenerateCombinations().ToList();
+        var fixedCombinations = existingCombinations
+            .GroupBy(c => GetKey(c, paramName))
+            .Select(g => g.First())
+            .ToArray();
+
+        foreach (var fixedCombination in fixedCombinations)
         {
             var plotModel = new PlotModel
             {
@@ -62,85 +139,130 @@ public static class AggregatedHistogramBuilder
 
             bool hasData = false;
 
-            foreach (var combination in generator.GenerateCombinations())
+            foreach (var combination in existingCombinations)
             {
-                if (!IsCombinationInGroup(fixedCombination, combination, varyingParamSelector))
+                if (!IsCombinationInGroup(fixedCombination, combination, paramName))
                     continue;
 
-                var profits = LoadProfitsFromCsv(combination, resultsDirectory, iterations); // Используем Results
-                if (profits == null || profits.Length == 0 || profits.Distinct().Count() < 2)
+                var profits = LoadProfitsFromCsv(combination, resultsDirectory);
+                if (profits.Length == 0)
                     continue;
 
                 var histogramSeries = CreateHistogramSeries(profits, combination, paramName);
-                if (histogramSeries == null)
-                    continue;
-
-                plotModel.Series.Add(histogramSeries);
-                hasData = true;
+                if (histogramSeries != null)
+                {
+                    plotModel.Series.Add(histogramSeries);
+                    hasData = true;
+                }
             }
 
-            if (!hasData)
+            if (hasData)
             {
-                Console.WriteLine($"Нет данных для группы: {groupTitle}");
-                continue;
+                var plotFileName =
+                    $"aggregated_{paramName}_E{fixedCombination.Employees}_S{fixedCombination.Salary}_C{fixedCombination.AverageClientsMonth}_M{fixedCombination.MeanCostOrder}_D{fixedCombination.OrderStdDev}_A{fixedCombination.Alpha}.png";
+                var plotFilePath = Path.Combine(aggregatedResultsDir, plotFileName);
+
+                using (var stream = File.Create(plotFilePath))
+                {
+                    var exporter = new PngExporter { Width = 1200, Height = 800 };
+                    exporter.Export(plotModel, stream);
+                }
             }
-
-            // Сохраняем график в AggregatedHistograms
-            var plotFileName =
-                $"aggregated_{paramName}_E{fixedCombination.Employees}_S{fixedCombination.Salary}_C{fixedCombination.AverageClientsMonth}_M{fixedCombination.MeanCostOrder}_D{fixedCombination.OrderStdDev}_A{fixedCombination.Alpha}.png";
-            var plotFilePath = Path.Combine(Path.Combine(resultsDirectory, "AggregatedHistograms"), plotFileName);
-
-            using (var stream = File.Create(plotFilePath))
-            {
-                var exporter = new PngExporter { Width = 1200, Height = 800 };
-                exporter.Export(plotModel, stream);
-            }
-
-            Console.WriteLine($"Агрегированный график для {paramName} сохранён в '{plotFilePath}'");
         }
     }
 
-    private static bool IsCombinationInGroup(ParameterCombination fixedCombination,
-        ParameterCombination currentCombination, Func<ParameterCombination, object> varyingParamSelector)
+    private static object GetKey(ParameterCombination combination, string excludedParamName)
     {
-        return fixedCombination.Employees == currentCombination.Employees &&
-               fixedCombination.Salary == currentCombination.Salary &&
-               fixedCombination.AverageClientsMonth == currentCombination.AverageClientsMonth &&
-               fixedCombination.MeanCostOrder == currentCombination.MeanCostOrder &&
-               fixedCombination.OrderStdDev == currentCombination.OrderStdDev &&
-               fixedCombination.Alpha == currentCombination.Alpha &&
-               !Equals(varyingParamSelector(fixedCombination), varyingParamSelector(currentCombination));
+        return excludedParamName switch
+        {
+            "Beta" => new { combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder, combination.OrderStdDev, combination.Alpha },
+            "Alpha" => new { combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder, combination.OrderStdDev, combination.Beta },
+            "OrderStdDev" => new { combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder, combination.Alpha, combination.Beta },
+            "MeanCostOrder" => new { combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.OrderStdDev, combination.Alpha, combination.Beta },
+            "AverageClientsMonth" => new { combination.Employees, combination.Salary, combination.MeanCostOrder, combination.OrderStdDev, combination.Alpha, combination.Beta },
+            "Employees" => new { combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder, combination.OrderStdDev, combination.Alpha, combination.Beta },
+            "Salary" => new { combination.Employees, combination.AverageClientsMonth, combination.MeanCostOrder, combination.OrderStdDev, combination.Alpha, combination.Beta },
+            _ => throw new ArgumentException("Unknown parameter name")
+        };
+    }
+
+    private static bool IsCombinationInGroup(ParameterCombination fixedCombination, 
+        ParameterCombination currentCombination, string excludedParamName)
+    {
+        var properties = typeof(ParameterCombination).GetProperties();
+        foreach (var prop in properties)
+        {
+            if (prop.Name == excludedParamName)
+                continue;
+
+            var fixedValue = prop.GetValue(fixedCombination);
+            var currentValue = prop.GetValue(currentCombination);
+
+            if (prop.PropertyType == typeof(int) || prop.PropertyType == typeof(double))
+            {
+                if (!CompareDoubles(Convert.ToDouble(fixedValue), Convert.ToDouble(currentValue)))
+                    return false;
+            }
+            else
+            {
+                if (!fixedValue.Equals(currentValue))
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    private static bool IsCombinationInGroup(ParameterCombination fixedCombination, 
+        ParameterCombination currentCombination, 
+        Func<ParameterCombination, object> varyingParamSelector)
+    {
+        
+        if (fixedCombination.Employees != currentCombination.Employees ||
+            fixedCombination.AverageClientsMonth != currentCombination.AverageClientsMonth ||
+            fixedCombination.Alpha != currentCombination.Alpha)
+        {
+            return false;
+        }
+        
+        if (!CompareDoubles(fixedCombination.Salary, currentCombination.Salary) ||
+            !CompareDoubles(fixedCombination.MeanCostOrder, currentCombination.MeanCostOrder) ||
+            !CompareDoubles(fixedCombination.OrderStdDev, currentCombination.OrderStdDev))
+        {
+            return false;
+        }
+
+        return !Equals(varyingParamSelector(fixedCombination), varyingParamSelector(currentCombination));
+    }
+
+    private static bool CompareDoubles(double a, double b, double tolerance = 1e-9)
+    {
+        return Math.Abs(a - b) <= tolerance;
     }
 
     private static ParameterCombination[] GetFixedCombinations(Parameters parameters,
         Func<ParameterCombination, object> varyingParamSelector)
     {
         return (
-            from employees in parameters.Employees
-            from salary in parameters.Salary
-            from averageClientsMonth in parameters.AverageClientsMonth
-            from meanCostOrder in parameters.MeanCostOrder
-            from orderStdDev in parameters.OrderStdDev
-            from alpha in parameters.Alpha
-            select new ParameterCombination(
-                employees,
-                salary,
-                averageClientsMonth,
-                meanCostOrder,
-                orderStdDev,
-                alpha,
-                Convert.ToInt32(varyingParamSelector(new ParameterCombination(employees, salary, averageClientsMonth,
-                    meanCostOrder, orderStdDev, alpha, 0)))
-            )
+            from employees in parameters.Employees.DefaultIfEmpty(parameters.Employees.First())
+            from salary in parameters.Salary.DefaultIfEmpty(parameters.Salary.First())
+            from averageClientsMonth in parameters.AverageClientsMonth.DefaultIfEmpty(parameters.AverageClientsMonth
+                .First())
+            from meanCostOrder in parameters.MeanCostOrder.DefaultIfEmpty(parameters.MeanCostOrder.First())
+            from orderStdDev in parameters.OrderStdDev.DefaultIfEmpty(parameters.OrderStdDev.First())
+            from alpha in parameters.Alpha.DefaultIfEmpty(parameters.Alpha.First())
+            let fixedCombination = new ParameterCombination(employees, salary, averageClientsMonth, meanCostOrder,
+                orderStdDev, alpha, parameters.Beta.DefaultIfEmpty(parameters.Beta.First()).First())
+            where !Equals(varyingParamSelector(fixedCombination),
+                varyingParamSelector(new ParameterCombination(employees, salary, averageClientsMonth, meanCostOrder,
+                    orderStdDev, alpha, 0)))
+            select fixedCombination
         ).Distinct().ToArray();
     }
 
-    private static double[] LoadProfitsFromCsv(ParameterCombination combination, string resultsDirectory,
-        int iterations)
+    private static double[] LoadProfitsFromCsv(ParameterCombination combination, string resultsDirectory)
     {
-        var csvFileName =
-            $"results_E{combination.Employees}_S{combination.Salary}_C{combination.AverageClientsMonth}_M{combination.MeanCostOrder}_D{combination.OrderStdDev}_A{combination.Alpha}_B{combination.Beta}.csv";
-        var csvFilePath = Path.Combine(resultsDirectory, csvFileName); // Ищем в Results
+        var csvFileName = $"results_E{combination.Employees}_S{combination.Salary}_C{combination.AverageClientsMonth}_M{combination.MeanCostOrder}_D{combination.OrderStdDev}_A{combination.Alpha}_B{combination.Beta}.csv";
+        var csvFilePath = Path.Combine(resultsDirectory, csvFileName);
 
         if (!File.Exists(csvFilePath))
         {
@@ -151,25 +273,25 @@ public static class AggregatedHistogramBuilder
         try
         {
             return File.ReadLines(csvFilePath)
-                .Skip(1) // Пропускаем заголовок
-                .Select(line => line.Split(',')) // Разделяем строки по запятой
-                .Where(parts => parts.Length > 1) // Проверяем, что есть второй столбец
-                .Select(parts => double.Parse(parts[1])) // Парсим второй столбец как прибыль
+                .Skip(1)
+                .Select(line => line.Split(','))
+                .Where(parts => parts.Length > 1)
+                .Select(parts => double.Parse(parts[1]))
                 .ToArray();
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Ошибка чтения данных из файла '{csvFilePath}': {ex.Message}");
-            return Array.Empty<double>();
+            return [];
         }
     }
     
 
-    private static HistogramSeries CreateHistogramSeries(double[] profits, ParameterCombination combination, string varyingParamName)
+    private static HistogramSeries? CreateHistogramSeries(double[] profits, ParameterCombination combination, string varyingParamName)
     {
         if (profits.Length == 0 || profits.Distinct().Count() < 2)
         {
-            Console.WriteLine($"Недостаточно уникальных данных для гистограммы: {varyingParamName}={GetVaryingParamValue(combination, varyingParamName)}");
+            Console.WriteLine($"Недостаточно данных для построения гистограммы: {varyingParamName}={GetVaryingParamValue(combination, varyingParamName)}");
             return null;
         }
 
