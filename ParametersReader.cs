@@ -14,13 +14,3 @@ public static class ParametersReader
         return parameters;
     }
 }
-
-public record Parameters(
-    int Iterations,
-    int[] Employees,
-    double[] Salary,
-    int[] AverageClientsMonth,
-    double[] MeanCostOrder,
-    double[] OrderStdDev,
-    int[] Alpha,
-    int[] Beta);
