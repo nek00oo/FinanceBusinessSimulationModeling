@@ -13,7 +13,7 @@ public static class PlotBuilder
         var plotModel = new PlotModel
         {
             Title =
-                $"Распределение прибыли бизнеса (E={combination.Employees}, S={combination.Salary}, C={combination.AverageClientsMonth}, M={combination.MeanCostOrder}, D={combination.OrderStdDev}, A={combination.Alpha}, B={combination.Beta})",
+                $"Распределение прибыли бизнеса (E={combination.Employees}, S={combination.Salary}, C={combination.AverageClientsMonth}, M={combination.MeanCostOrder}, D={combination.OrderStdDev})",
             TitleColor = OxyColors.White,
             PlotAreaBorderColor = OxyColors.White,
             Background = OxyColors.Black

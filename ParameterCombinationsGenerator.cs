@@ -17,17 +17,13 @@ namespace SimulationModeling
                 from averageClientMonth in _parameters.AverageClientsMonth
                 from meanCostOrder in _parameters.MeanCostOrder
                 from orderStdDev in _parameters.OrderStdDev
-                from alpha in _parameters.Alpha
-                from beta in _parameters.Beta
                 select new ParameterCombination
             (
                 employees,
                 salary,
                 averageClientMonth,
                 meanCostOrder,
-                orderStdDev,
-                alpha,
-                beta
+                orderStdDev
             );
         }
     }
@@ -38,7 +34,5 @@ public record ParameterCombination(
     double Salary,
     int AverageClientsMonth,
     double MeanCostOrder,
-    double OrderStdDev,
-    int Alpha,
-    int Beta
+    double OrderStdDev
 );

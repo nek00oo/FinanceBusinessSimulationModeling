@@ -22,8 +22,6 @@ public static class AggregatedHistogramBuilder
         // Список параметров для анализа с их описаниями
         var paramsToCheck = new Dictionary<string, (string Title, Func<ParameterCombination, object> Selector)>()
         {
-            { "Beta", ("Beta Variations", c => c.Beta) },
-            { "Alpha", ("Alpha Variations", c => c.Alpha) },
             { "OrderStdDev", ("Order StdDev Variations", c => c.OrderStdDev) },
             { "MeanCostOrder", ("Mean Cost Order Variations", c => c.MeanCostOrder) },
             { "AverageClientsMonth", ("Average Clients Month Variations", c => c.AverageClientsMonth) },
@@ -194,49 +192,33 @@ public static class AggregatedHistogramBuilder
                $"S{combo.Salary}_" +
                $"C{combo.AverageClientsMonth}_" +
                $"M{combo.MeanCostOrder}_" +
-               $"D{combo.OrderStdDev}_" +
-               $"A{combo.Alpha}_" +
-               $"B{combo.Beta}.png";
+               $"D{combo.OrderStdDev}.png";
     }
 
     private static object GetKey(ParameterCombination combination, string excludedParamName)
     {
         return excludedParamName switch
         {
-            "Beta" => new
-            {
-                combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder,
-                combination.OrderStdDev, combination.Alpha
-            },
-            "Alpha" => new
-            {
-                combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder,
-                combination.OrderStdDev, combination.Beta
-            },
             "OrderStdDev" => new
             {
-                combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder,
-                combination.Alpha, combination.Beta
+                combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder
             },
             "MeanCostOrder" => new
             {
-                combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.OrderStdDev,
-                combination.Alpha, combination.Beta
+                combination.Employees, combination.Salary, combination.AverageClientsMonth, combination.OrderStdDev
             },
             "AverageClientsMonth" => new
             {
-                combination.Employees, combination.Salary, combination.MeanCostOrder, combination.OrderStdDev,
-                combination.Alpha, combination.Beta
+                combination.Employees, combination.Salary, combination.MeanCostOrder, combination.OrderStdDev
             },
             "Employees" => new
             {
-                combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder, combination.OrderStdDev,
-                combination.Alpha, combination.Beta
+                combination.Salary, combination.AverageClientsMonth, combination.MeanCostOrder, combination.OrderStdDev
             },
             "Salary" => new
             {
                 combination.Employees, combination.AverageClientsMonth, combination.MeanCostOrder,
-                combination.OrderStdDev, combination.Alpha, combination.Beta
+                combination.OrderStdDev
             },
             _ => throw new ArgumentException("Unknown parameter name")
         };
@@ -277,7 +259,7 @@ public static class AggregatedHistogramBuilder
     private static double[] LoadProfitsFromCsv(ParameterCombination combination, string resultsDirectory)
     {
         var csvFileName =
-            $"results_E{combination.Employees}_S{combination.Salary}_C{combination.AverageClientsMonth}_M{combination.MeanCostOrder}_D{combination.OrderStdDev}_A{combination.Alpha}_B{combination.Beta}.csv";
+            $"results_E{combination.Employees}_S{combination.Salary}_C{combination.AverageClientsMonth}_M{combination.MeanCostOrder}_D{combination.OrderStdDev}.csv";
         var csvFilePath = Path.Combine(resultsDirectory, csvFileName);
 
         if (!File.Exists(csvFilePath))
@@ -347,8 +329,6 @@ public static class AggregatedHistogramBuilder
     {
         return varyingParamName switch
         {
-            "Beta" => combination.Beta,
-            "Alpha" => combination.Alpha,
             "OrderStdDev" => combination.OrderStdDev,
             "MeanCostOrder" => combination.MeanCostOrder,
             "AverageClientsMonth" => combination.AverageClientsMonth,

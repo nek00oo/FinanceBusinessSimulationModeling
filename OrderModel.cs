@@ -2,8 +2,8 @@ namespace SimulationModeling;
 
 public class OrderModel
 {
-    private double _orderStdDev;
-    private double _meanCostOrder;
+    public double OrderStdDev { get; set; }
+    public double MeanCostOrder { get; set; }
     private LinearCongruentialGenerator _rng;
     
     public OrderModel(LinearCongruentialGenerator rng, double meanCostOrder, double orderStdDev)
@@ -14,9 +14,9 @@ public class OrderModel
         if (orderStdDev < 0 && orderStdDev > meanCostOrder)
             throw new ArgumentException($"Dispersion must be greater than or equal to 0 and more than mean cost order: {meanCostOrder}, your value: {orderStdDev}");
         
-        _orderStdDev = orderStdDev;
-        _meanCostOrder = meanCostOrder;
+        OrderStdDev = orderStdDev;
+        MeanCostOrder = meanCostOrder;
         _rng = rng;
     }
-    public double CalculateCostOrder() => Distributions.NormalDistribution(_rng, _meanCostOrder, _orderStdDev);
+    public double CalculateCostOrder() => Distributions.NormalDistribution(_rng, MeanCostOrder, OrderStdDev);
 }

@@ -1,10 +1,8 @@
 {
   "Iterations": 100000,
-  "Employees": [13],
+  "Employees": [10],
   "Salary": [100000],
   "AverageClientsMonth": [25],
   "MeanCostOrder": [60000],
-  "OrderStdDev": [10000, 30000],
-  "Alpha": [2],
-  "Beta": [8]
+  "OrderStdDev": [10000]
 }
