@@ -1,9 +1,0 @@
-{
-  "Iterations": 10000,
-  "Employees": [5, 6, 9, 11, 15],
-  "Salary": [80000, 10000, 12000],
-  "AverageClientsMonth": [10, 15, 25, 30, 45],
-  "MeanCostOrder": [60000, 80000],
-  "OrderStdDev": [10000, 15000, 20000],
-  "Parallelism": 4
-}
