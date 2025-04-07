@@ -187,7 +187,7 @@ public static class AggregatedHistogramBuilder
 
     private static string GeneratePlotFileName(ParameterCombination combo, string paramName)
     {
-        return $"aggregated_{paramName}_" +
+        return $"Aggregated_{paramName}_" +
                $"E{combo.Employees}_" +
                $"S{combo.Salary}_" +
                $"C{combo.AverageClientsMonth}_" +

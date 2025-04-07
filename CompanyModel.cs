@@ -1,5 +1,3 @@
-using MathNet.Numerics.Distributions;
-
 namespace SimulationModeling;
 
 public class CompanyModel
@@ -18,7 +16,7 @@ public class CompanyModel
         _countEmployee = countEmployee;
         _averageSalary = averageSalary;
         Order = order;
-        Client = new ClientModel(Rng);
+        Client = new ClientModel(rng);
     }
 
     public double CalculateProfitMonth(int averageClientMonth, out int amountClientMonth, out int successOrders)
@@ -37,7 +35,7 @@ public class CompanyModel
         for (int j = 0; j < amountClientMonth; j++)
         {
             double failChance = CalculateChanceFailedOrder();
-            totalComplexity += failChance; // Используем шанс провала как меру сложности
+            totalComplexity += failChance;
             
             bool isSuccess = Rng.NextDouble() > failChance;
             double orderValue = Order.CalculateCostOrder() * (1 + Math.Pow(1 - failChance, 2));
@@ -61,11 +59,11 @@ public class CompanyModel
             }
         }
         
-        // Оптимальное количество сотрудников на основе средней сложности
+        // Оптимальное количество сотрудников
         double avgComplexity = totalComplexity / amountClientMonth;
-        double optimalEmployees = CalculateOptimalEmployees(avgComplexity);
+        double optimalEmployees = CalculateOptimalEmployees(avgComplexity, amountClientMonth);
         
-        // Зарплатные расходы с адаптивной зависимостью
+        // Зарплатные расходы
         double salaryCost = CalculateSalaryCost(optimalEmployees, baseSalary);
         
         profitMonth -= salaryCost;
@@ -83,46 +81,35 @@ public class CompanyModel
 
     private double CalculateDynamicAlpha()
     {
-        // Факторы риска
+        // Учитываем нагрузку и сложность заказов
         double loadFactor = (double)Client.GetAmountClient(1) / _countEmployee;
         double complexityFactor = Order.OrderStdDev / Order.MeanCostOrder;
         
-        // Нормализация
-        double normalizedLoad = Normalize(loadFactor, 0.2, 5.0);
-        double normalizedComplexity = Normalize(complexityFactor, 0.1, 1.0);
-        
+        // Логарифмическая нормализация нагрузки
+        double normalizedLoad = Math.Log(1 + loadFactor);
         return Math.Clamp(
-            0.6 * normalizedLoad + 0.4 * normalizedComplexity,
-            0.01, // Минимальное значение alpha
-            0.99  // Максимальное значение alpha
+            0.6 * normalizedLoad + 0.4 * complexityFactor,
+            0.01, 
+            0.99
         );
     }
 
     private double CalculateDynamicBeta()
     {
-        // Нормализация количества сотрудников
-        return Math.Clamp(
-            Normalize(_countEmployee, 5, 20),
-            0.01, // Минимальное значение beta
-            0.99   // Максимальное значение beta
-        );
+        // Beta пропорциональна количеству сотрудников
+        return Math.Clamp(_countEmployee * 0.05, 0.01, 0.99);
     }
 
-    private double CalculateOptimalEmployees(double complexity)
+    private double CalculateOptimalEmployees(double complexity, int clients)
     {
-        // Оптимальное количество сотрудников линейно зависит от сложности
-        return 5 + 15 * complexity; // Диапазон от 5 до 20 сотрудников
+        // Нелинейная зависимость: учитываем сложность и количество клиентов
+        return 0.5 * clients + 10 * complexity * complexity;
     }
 
     private double CalculateSalaryCost(double optimalEmployees, double baseSalary)
     {
-        // Квадратичная зависимость от отклонения от оптимала
         double deviation = _countEmployee - optimalEmployees;
-        return _countEmployee * baseSalary * (1 + 0.03 * deviation * deviation);
-    }
-
-    private double Normalize(double value, double min, double max)
-    {
-        return Math.Max(0, Math.Min(1, (value - min) / (max - min)));
+        // Кубическая зависимость штрафа
+        return _countEmployee * baseSalary * (1 + 0.001 * Math.Pow(deviation, 3));
     }
 }

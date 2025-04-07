@@ -1,0 +1,87 @@
+{
+  "format": 1,
+  "restore": {
+    "C:\\Users\\valer\\RiderProjects\\SimulationModeling\\SimulationModeling\\SimulationModeling.csproj": {}
+  },
+  "projects": {
+    "C:\\Users\\valer\\RiderProjects\\SimulationModeling\\SimulationModeling\\SimulationModeling.csproj": {
+      "version": "1.0.0",
+      "restore": {
+        "projectUniqueName": "C:\\Users\\valer\\RiderProjects\\SimulationModeling\\SimulationModeling\\SimulationModeling.csproj",
+        "projectName": "SimulationModeling",
+        "projectPath": "C:\\Users\\valer\\RiderProjects\\SimulationModeling\\SimulationModeling\\SimulationModeling.csproj",
+        "packagesPath": "C:\\Users\\valer\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\valer\\RiderProjects\\SimulationModeling\\SimulationModeling\\obj\\",
+        "projectStyle": "PackageReference",
+        "configFilePaths": [
+          "C:\\Users\\valer\\AppData\\Roaming\\NuGet\\NuGet.Config"
+        ],
+        "originalTargetFrameworks": [
+          "net8.0"
+        ],
+        "sources": {
+          "https://api.nuget.org/v3/index.json": {}
+        },
+        "frameworks": {
+          "net8.0": {
+            "targetAlias": "net8.0",
+            "projectReferences": {}
+          }
+        },
+        "warningProperties": {
+          "warnAsError": [
+            "NU1605"
+          ]
+        }
+      },
+      "frameworks": {
+        "net8.0": {
+          "targetAlias": "net8.0",
+          "dependencies": {
+            "GeneticSharp": {
+              "target": "Package",
+              "version": "[3.1.4, )"
+            },
+            "MathNet.Numerics": {
+              "target": "Package",
+              "version": "[5.0.0, )"
+            },
+            "Newtonsoft.Json": {
+              "target": "Package",
+              "version": "[13.0.3, )"
+            },
+            "OxyPlot.Core": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            },
+            "OxyPlot.SkiaSharp": {
+              "target": "Package",
+              "version": "[2.2.0, )"
+            },
+            "ScottPlot": {
+              "target": "Package",
+              "version": "[4.1.74, )"
+            }
+          },
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48",
+            "net481"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\8.0.100/PortableRuntimeIdentifierGraph.json"
+        }
+      }
+    }
+  }
+}

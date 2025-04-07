@@ -1,6 +1,8 @@
-﻿using SimulationModeling;
-using SimulationModeling.Builders;
+﻿using GeneticSharp;
+using SimulationModeling;
+using System;
 using System.Diagnostics;
+using System.Linq;
 
 class Program
 {
@@ -10,71 +12,122 @@ class Program
 
         var parameters = ParametersReader.ReadParametersFromJson(
             "C:\\Users\\valer\\RiderProjects\\SimulationModeling\\SimulationModeling\\parameters.json");
-        if (parameters == null)
+        if (parameters == null) return;
+
+        var chromosome = new Chromosome(
+            employees: parameters.Employees.ToArray(),
+            salary: parameters.Salary.ToArray(),
+            clients: parameters.AverageClientsMonth.ToArray(),
+            meanCost: parameters.MeanCostOrder.ToArray(),
+            stdDev: parameters.OrderStdDev.ToArray()
+        );
+        
+        var population = new Population(15, 30, chromosome);
+        var fitnessFunction = new FitnessFunction(parameters.Iterations);
+        var selection = new TournamentSelection();
+        var crossover = new UniformCrossover();
+        var mutation = new UniformMutation();
+        
+        var ga = new GeneticAlgorithm(
+            population: population,
+            fitness: fitnessFunction,
+            selection: selection,
+            crossover: crossover,
+            mutation: mutation)
         {
-            Console.WriteLine("Ошибка чтения параметров из файла.");
-            return;
+            Termination = new GenerationNumberTermination(3),
+            MutationProbability = 0.25f,
+            CrossoverProbability = 0.85f
+        };
+
+        ga.Start();
+        var bestChromosome = ga.BestChromosome as Chromosome;
+        
+        if (bestChromosome != null)
+        {
+            var bestParams = bestChromosome.GetParameters();
+            Console.WriteLine("\nОптимальные параметры:");
+            Console.WriteLine($"Employees: {bestParams.Employees}");
+            Console.WriteLine($"Salary: {bestParams.Salary:N0}");
+            Console.WriteLine($"Average Clients: {bestParams.AverageClientsMonth}");
+            Console.WriteLine($"Mean Cost: {bestParams.MeanCostOrder:N0}");
+            Console.WriteLine($"StdDev: {bestParams.OrderStdDev:N0}");
+            Console.WriteLine($"Profit: {bestChromosome.Fitness:N0}");
         }
 
-        var iterations = parameters.Iterations;
+        Console.WriteLine($"\nВремя выполнения: {stopwatch.Elapsed.TotalSeconds:N1} сек");
+    }
+}
 
-        var resultsDirectory = Path.Combine("C:\\Users\\valer\\RiderProjects\\SimulationModeling", "Results");
-        Directory.CreateDirectory(resultsDirectory);
+class Chromosome : ChromosomeBase
+{
+    private readonly int[] _employees;
+    private readonly double[] _salary;
+    private readonly int[] _clients;
+    private readonly double[] _meanCost;
+    private readonly double[] _stdDev;
 
-        var generator = new ParameterCombinationsGenerator(parameters);
+    public Chromosome(
+        int[] employees, 
+        double[] salary, 
+        int[] clients, 
+        double[] meanCost, 
+        double[] stdDev) : base(5)
+    {
+        _employees = employees;
+        _salary = salary;
+        _clients = clients;
+        _meanCost = meanCost;
+        _stdDev = stdDev;
+        
+        CreateGenes();
+    }
 
-        // Проверяем, все ли параметры имеют только одно значение
-        bool isSingleCombination = parameters.Employees.Count == 1 &&
-                                   parameters.Salary.Count == 1 &&
-                                   parameters.AverageClientsMonth.Count == 1 &&
-                                   parameters.MeanCostOrder.Count == 1 &&
-                                   parameters.OrderStdDev.Count == 1;
-
-        foreach (var combination in generator.GenerateCombinations())
+    public override Gene GenerateGene(int geneIndex)
+    {
+        return geneIndex switch
         {
-            var rng = new LinearCongruentialGenerator(123456789);
+            0 => new Gene(_employees.OrderBy(x => Guid.NewGuid()).First()),
+            1 => new Gene(_salary.OrderBy(x => Guid.NewGuid()).First()),
+            2 => new Gene(_clients.OrderBy(x => Guid.NewGuid()).First()),
+            3 => new Gene(_meanCost.OrderBy(x => Guid.NewGuid()).First()),
+            4 => new Gene(_stdDev.OrderBy(x => Guid.NewGuid()).First()),
+            _ => throw new ArgumentOutOfRangeException()
+        };
+    }
 
-            var orderModel = new OrderModel(rng, combination.MeanCostOrder, Math.Sqrt(combination.OrderStdDev));
-            var companyModel = new CompanyModel(rng, combination.Employees, combination.Salary, orderModel);
+    public override IChromosome CreateNew() => new Chromosome(_employees, _salary, _clients, _meanCost, _stdDev);
 
-            var profits = new double[iterations];
+    public ParameterCombination GetParameters() => new(
+        (int)GetGene(0).Value,
+        (double)GetGene(1).Value,
+        (int)GetGene(2).Value,
+        (double)GetGene(3).Value,
+        (double)GetGene(4).Value
+    );
+}
 
-            var csvFileName =
-                $"results_E{combination.Employees}_S{combination.Salary}_C{combination.AverageClientsMonth}_M{combination.MeanCostOrder}_D{combination.OrderStdDev}.csv";
-            var csvFilePath = Path.Combine(resultsDirectory, csvFileName);
+class FitnessFunction : IFitness
+{
+    private readonly int _iterations;
 
-            using (var writer = new StreamWriter(csvFilePath))
-            {
-                writer.WriteLine("Iteration,Profit,Clients,SuccessfulOrders");
-                for (int i = 0; i < iterations; i++)
-                {
-                    profits[i] = companyModel.CalculateProfitMonth(combination.AverageClientsMonth,
-                        out var amountClient, out var successOrders);
-                    var profit = (int)profits[i];
-                    writer.WriteLine($"{i + 1},{profit},{amountClient},{successOrders}");
-                }
-            }
+    public FitnessFunction(int iterations) => _iterations = iterations;
 
-            Console.WriteLine($"Данные сохранены в '{csvFilePath}'");
+    public double Evaluate(IChromosome chromosome)
+    {
+        var combo = (chromosome as Chromosome)!.GetParameters();
+        var rng = new LinearCongruentialGenerator(123456789);
+        var model = new CompanyModel(
+            rng,
+            combo.Employees,
+            combo.Salary,
+            new OrderModel(rng, combo.MeanCostOrder, Math.Sqrt(combo.OrderStdDev))
+        );
 
-            // Если все параметры имеют одно значение, строим обычный график
-            if (isSingleCombination)
-            {
-                var plotFileName = "SINGLE_HISTOGRAM.png";
-                var plotFilePath = Path.Combine(resultsDirectory, plotFileName);
+        double total = 0;
+        for (int i = 0; i < _iterations; i++)
+            total += model.CalculateProfitMonth(combo.AverageClientsMonth, out _, out _);
 
-                PlotBuilder.BuildAndSaveHistogram(profits, plotFilePath, combination);
-            }
-        }
-
-        // Если есть вариации параметров, строим агрегированные графики
-        if (!isSingleCombination)
-        {
-            AggregatedHistogramBuilder.BuildAndSaveAggregatedHistograms(parameters, resultsDirectory, generator);
-        }
-
-        stopwatch.Stop();
-        TimeSpan ts = stopwatch.Elapsed;
-        Console.WriteLine($"Время выполнения программы: {ts.TotalSeconds} секунд");
+        return total / _iterations;
     }
 }
